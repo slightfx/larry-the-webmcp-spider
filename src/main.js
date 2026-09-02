@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import './style.css';
 import { GameScene } from './game/GameScene.js';
+import { apiUrl } from './game/apiClient.js';
 
 const app = document.getElementById('app');
 app.classList.add('spider-locked');
@@ -30,7 +31,7 @@ startScreen.querySelector('form').addEventListener('submit', async (event) => {
   const password = form.querySelector('input').value;
   output.textContent = 'CHECKING…';
   try {
-    const response = await fetch('/api/auth/check', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password }) });
+    const response = await fetch(apiUrl('/api/auth/check'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password }) });
     const result = await response.json().catch(() => ({}));
     if (!response.ok || !result.ok) throw new Error(result.error || 'Incorrect password.');
     app.classList.remove('spider-locked');

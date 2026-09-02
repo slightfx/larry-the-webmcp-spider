@@ -46,7 +46,7 @@ services:
       - key: OLLAMA_API_KEY
         sync: false
       - key: OLLAMA_MODEL
-        value: gemma-4-31B-it
+        value: gemma4:31b-cloud
       - key: DEEPGRAM_API_KEY
         sync: false
       - key: SPIDER_PASSWORD

@@ -54,7 +54,7 @@ export function createApp({ fetchImpl = globalThis.fetch } = {}) {
     fetchImpl,
     url: () => process.env.OLLAMA_API_URL || 'https://ollama.com/v1/chat/completions',
     key: () => process.env.OLLAMA_API_KEY,
-    model: () => process.env.OLLAMA_MODEL || 'gemma-4-31B-it',
+    model: () => process.env.OLLAMA_MODEL || 'gemma4:31b-cloud',
     label: 'Ollama',
   }));
   // This endpoint receives a raw MediaRecorder Blob. Browsers may label WebM

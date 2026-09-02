@@ -12,7 +12,7 @@ startScreen.innerHTML = `
     <h1>COMMAND LARRY THE SPIDER</h1>
     <p>Larry is a curious eight-legged explorer. Guide him through the terrarium, climb trees, reach platforms, and hunt tiny prey.</p>
     <p>Type a command and press <b>GO</b>, or use <b>PLAN</b> to let an LLM choose the WebMCP tools in order. You can also run tools directly from the Manual Tool Console.</p>
-    <p><b>AI model:</b> Both provider options use <code>gemma-4-31B-it</code>. Ollama Cloud is selected by default, while Lightning AI is available as an alternative.</p>
+    <p><b>AI model:</b> Ollama Cloud uses <code>gemma4:31b-cloud</code>. Lightning AI is available as an alternative.</p>
     <p><b>Voice commands:</b> The <b>VOICE</b> button records your microphone input in the browser. The recording is sent to the server, where Deepgram transcribes it using Nova-3; the transcript is then submitted as a normal Larry command and can be executed or planned.</p>
     <p><b>WebMCP tools</b> are safe game actions exposed to the model: move Larry, jump, climb trees, hunt prey, stop, and return to the ground. The game’s purpose is to experiment with tool-using AI while helping Larry explore his tiny habitat.</p>
     <p><b>AI access requires the password.</b> Without it, you can play manually, but the AI command, planning, and voice tools are unavailable.</p>

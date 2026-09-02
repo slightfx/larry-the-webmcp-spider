@@ -23,14 +23,14 @@ export class SpiderCommandPanel {
       <div class="spider-command-model-picker">
         <label for="spider-command-model-select">MODEL</label>
         <select id="spider-command-model-select" name="model" aria-label="Command model">
-          <option value="ollama">Ollama Cloud (Gemma 4 31B IT)</option>
+          <option value="ollama">Ollama Cloud (Gemma 4 31B Cloud)</option>
           <option value="lightning">Lightning AI</option>
         </select>
         <button type="button" id="spider-voice-button" aria-pressed="false">VOICE</button>
       </div>
       <output id="spider-command-message">MESSAGE: —</output>
       <output id="spider-command-plan">TOOLS: —</output>
-      <output id="spider-command-model">MODEL: OLLAMA CLOUD (GEMMA 4 31B IT)</output>
+      <output id="spider-command-model">MODEL: OLLAMA CLOUD (GEMMA 4 31B CLOUD)</output>
       <output id="spider-command-status" aria-live="polite">STATUS: READY</output>
       <a class="spider-dialog-link" href="https://webmachinelearning.github.io/webmcp/" target="_blank" rel="noreferrer">WEBMCP DOCUMENTATION ↗</a>
     `;
@@ -62,7 +62,7 @@ export class SpiderCommandPanel {
     this.modelSelect.addEventListener('change', () => {
       const labels = {
         lightning: 'MODEL: LIGHTNING AI',
-        ollama: 'MODEL: OLLAMA CLOUD (GEMMA 4 31B IT)',
+        ollama: 'MODEL: OLLAMA CLOUD (GEMMA 4 31B CLOUD)',
       };
       this.setReadout(this.model, labels[this.modelSelect.value] || 'MODEL: LIGHTNING AI');
       this.updateAvailability();

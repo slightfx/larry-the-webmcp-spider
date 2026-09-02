@@ -1,0 +1,53 @@
+services:
+  - type: web
+    runtime: static
+    name: spider-terrarium
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://spider-terrarium-api.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+
+  - type: web
+    runtime: node
+    name: spider-terrarium-api
+    rootDir: server
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    envVars:
+      - key: FRONTEND_URL
+        value: https://spider-terrarium.onrender.com
+      - key: LIGHTNING_API_URL
+        sync: false
+      - key: LIGHTNING_API_KEY
+        sync: false
+      - key: LIGHTNING_MODEL
+        value: lightning-ai/gemma-4-31B-it
+      - key: OLLAMA_API_URL
+        sync: false
+      - key: OLLAMA_API_KEY
+        sync: false
+      - key: OLLAMA_MODEL
+        value: gemma-4-31B-it
+      - key: DEEPGRAM_API_KEY
+        sync: false
+      - key: SPIDER_PASSWORD
+        sync: false

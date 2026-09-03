@@ -150,3 +150,43 @@ export function generateProceduralTerrain(seed, options = {}) {
     decorations: { ferns, stones, mushrooms, canopy, stems },
   };
 }
+
+export function generateTutorialTerrain(seed, level, options = {}) {
+  const terrain = generateProceduralTerrain(seed, options);
+  const ground = terrain.platforms.find((platform) => platform.h > 10);
+  const trees = terrain.climbables;
+  const branches = terrain.platforms.filter((platform) => platform.h <= 10);
+  const keepTree = (index) => trees[index % trees.length];
+  const treePlatforms = (tree) => branches.filter((platform) => platform.treeSeed === tree.seed);
+
+  if (level === 1) {
+    terrain.climbables = [];
+    terrain.platforms = [ground];
+    terrain.spawnX = 92;
+  } else if (level === 2) {
+    const tree = keepTree(1);
+    terrain.climbables = [tree];
+    terrain.platforms = [ground, ...treePlatforms(tree).slice(0, 1)];
+    terrain.spawnX = 350;
+  } else if (level === 3) {
+    const tree = keepTree(2);
+    terrain.climbables = [tree];
+    terrain.platforms = [ground, ...treePlatforms(tree)];
+    terrain.spawnX = 560;
+  } else if (level === 4) {
+    const tree = keepTree(0);
+    terrain.climbables = [tree];
+    terrain.platforms = [ground, ...treePlatforms(tree)];
+    terrain.spawnX = 260;
+  } else if (level === 5) {
+    terrain.climbables = [keepTree(0), keepTree(1)];
+    terrain.platforms = [ground, ...terrain.climbables.flatMap(treePlatforms)];
+    terrain.spawnX = 390;
+  } else if (level === 6) {
+    terrain.climbables = [];
+    terrain.platforms = [ground];
+    terrain.spawnX = 92;
+  }
+
+  return terrain;
+}

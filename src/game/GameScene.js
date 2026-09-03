@@ -6,12 +6,14 @@ import { SpiderWebMcpController } from './SpiderWebMcpController.js';
 import { SpiderManualToolPanel } from './SpiderManualToolPanel.js';
 import { SpiderCommandPanel } from './SpiderCommandPanel.js';
 import { SpiderHelpPanel } from './SpiderHelpPanel.js';
+import { SpiderTutorialPanel } from './SpiderTutorialPanel.js';
 import { SpiderGoalMarker } from './SpiderGoalMarker.js';
 import { SpiderSilkRenderer } from './SpiderSilkRenderer.js';
 import { SpiderMovementSound } from './SpiderMovementSound.js';
 import { WormManager } from './WormManager.js';
 import {
   generateProceduralTerrain,
+  generateTutorialTerrain,
   getTerrainSway,
 } from './proceduralTerrain.js';
 
@@ -26,6 +28,19 @@ export class GameScene extends Phaser.Scene {
     super('game');
   }
 
+  init(data = {}) {
+    this.tutorialLevel = Number.isInteger(data.tutorialLevel) ? data.tutorialLevel : 0;
+    this.tutorialComplete = Boolean(data.tutorialComplete || this.readTutorialCompletion());
+  }
+
+  readTutorialCompletion() {
+    try {
+      return globalThis.localStorage?.getItem('larry-tutorial-complete') === 'true';
+    } catch {
+      return false;
+    }
+  }
+
   create() {
     this.deathRestartAt = 0;
     this.cameras.main.setBackgroundColor('#bfd3b5');
@@ -33,16 +48,21 @@ export class GameScene extends Phaser.Scene {
 
     const requestedSeed = new URLSearchParams(globalThis.location?.search || '').get('seed');
     const terrainSeed = requestedSeed || Phaser.Math.RND.integerInRange(1, 0x7fffffff);
-    this.terrain = generateProceduralTerrain(terrainSeed, {
+    const terrainOptions = {
       width: WORLD_WIDTH,
       height: WORLD_HEIGHT,
       groundY: GROUND_Y,
-    });
+    };
+    this.terrain = this.tutorialComplete
+      ? generateProceduralTerrain(terrainSeed, terrainOptions)
+      : generateTutorialTerrain(terrainSeed, this.tutorialLevel + 1, terrainOptions);
     this.platforms = this.terrain.platforms;
     this.climbables = this.terrain.climbables;
 
     this.drawTerrariumBackground();
     this.drawHabitat();
+    this.tutorialSpikes = [];
+    if (!this.tutorialComplete && this.tutorialLevel === 5) this.createTutorialSpikes();
     this.wormManager = new WormManager(this, {
       groundY: GROUND_Y,
       width: WORLD_WIDTH,
@@ -93,10 +113,15 @@ export class GameScene extends Phaser.Scene {
       this.cameras.main.shake(120, Math.min(0.009, 0.002 + damage * 0.0002));
       this.cameras.main.flash(90, 126, 44, 55, false);
       this.spiderVision.flashDamage();
+      this.spiderTutorialPanel?.complain(damage);
     };
 
     this.webMcpController = new SpiderWebMcpController(this);
     this.spiderGoalMarker = new SpiderGoalMarker(this, this.webMcpController);
+    this.spiderTutorialPanel = this.tutorialComplete
+      ? null
+      : new SpiderTutorialPanel(this, this.tutorialLevel);
+    this.spiderTutorialPanel?.announce();
     this.spiderHelpPanel = new SpiderHelpPanel();
     this.spiderManualToolPanel = new SpiderManualToolPanel(this.webMcpController);
     this.spiderCommandPanel = new SpiderCommandPanel(this.webMcpController, {
@@ -105,6 +130,7 @@ export class GameScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.webMcpController.destroy();
       this.spiderGoalMarker.destroy();
+      this.spiderTutorialPanel?.destroy();
       this.spiderHelpPanel.destroy();
       this.spiderManualToolPanel.destroy();
       this.spiderCommandPanel.destroy();
@@ -164,6 +190,8 @@ export class GameScene extends Phaser.Scene {
     this.wormManager.update(dt);
     this.spiderSilkRenderer.update(_time);
     this.webMcpController.syncState();
+    this.checkTutorialSpikes();
+    this.spiderTutorialPanel?.update(this.webMcpController.reportedControlState);
     this.spiderGoalMarker.update();
     this.spiderManualToolPanel.update();
     this.bugManager.update(dt);
@@ -188,6 +216,51 @@ export class GameScene extends Phaser.Scene {
       `${prefix}HP ${this.spider.health}/${this.spider.maxHealth}  ` +
       `SIZE ${size}%  SPEED ${speed}`,
     );
+  }
+
+  enterBigTerrarium() {
+    try {
+      globalThis.localStorage?.setItem('larry-tutorial-complete', 'true');
+    } catch {
+      // Continue into the full terrarium when storage is unavailable.
+    }
+    this.scene.restart({ tutorialComplete: true });
+  }
+
+  createTutorialSpikes() {
+    const graphics = this.add.graphics().setDepth(16);
+    const spikes = { x: 330, y: GROUND_Y, w: 92, h: 14, graphics };
+    graphics.fillStyle(0x6f3d3e, 1);
+    for (let x = spikes.x; x < spikes.x + spikes.w; x += 10) {
+      graphics.fillTriangle(x, spikes.y, x + 5, spikes.y - spikes.h, x + 10, spikes.y);
+    }
+    graphics.lineStyle(1, 0xd8a28f, 0.9);
+    graphics.lineBetween(spikes.x, spikes.y, spikes.x + spikes.w, spikes.y);
+    this.tutorialSpikes.push(spikes);
+  }
+
+  checkTutorialSpikes() {
+    if (this.tutorialLevel !== 5 || !this.tutorialSpikes.length || this.spiderRespawning) return;
+    const spike = this.tutorialSpikes[0];
+    const x = this.spider.position.x;
+    const onGround = this.spider.grounded && this.spider.surfaceType === 'floor';
+    if (onGround && x >= spike.x - 7 && x <= spike.x + spike.w + 7) {
+      if (this.time.now < (this.tutorialSpikeCooldown || 0)) return;
+      this.tutorialSpikeCooldown = this.time.now + 900;
+      this.webMcpController.stopAllActions();
+      this.spider.position.x = this.terrain.spawnX;
+      this.spider.velocity.x = 0;
+      this.spider.sayCommand?.('OUCH! JUMP OVER THE SPIKES!');
+      this.spiderTutorialPanel?.status && (this.spiderTutorialPanel.status.textContent = 'SPIKES! TRY JUMPING OVER THEM.');
+      if (this.spider.body && this.matter?.body?.setPosition) {
+        this.matter.body.setPosition(this.spider.body, {
+          x: this.spider.position.x,
+          y: this.spider.position.y,
+        });
+      }
+      return;
+    }
+    if (x > spike.x + spike.w + 10) this.spiderTutorialPanel.clearedSpikes = true;
   }
 
   explodeAndRespawnSpider() {

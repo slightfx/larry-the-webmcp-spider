@@ -200,17 +200,11 @@ export class SpiderCommandPanel {
   submitVoiceCommand(transcript) {
     const command = transcript.trim();
     if (!command) return;
-    // Keep the recognized words visible in the command field, then submit
-    // them through the same goal path as typed commands.
+    // Keep the recognized words visible, then trigger the real GO submit path
+    // so voice commands behave exactly like typed commands.
     this.input.value = command;
-    this.pendingPlan = null;
-    this.onPlanUpdate(null);
-    this.setReadout(this.message, `MESSAGE: ${command}`, command);
-    this.setReadout(this.plan, 'TOOLS: PLANNING…');
-    this.setReadout(this.status, 'STATUS: THINKING…');
     this.input.disabled = false;
-    this.goalRunner.agent = this.getSelectedAgent();
-    this.goalRunner.start(command);
+    this.form.requestSubmit(this.button);
   }
 
   submit(event) {

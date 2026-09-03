@@ -21,6 +21,7 @@ export class SpiderTutorialPanel {
       <span class="spider-tutorial-hint"></span>
       <output class="spider-tutorial-status" aria-live="polite">IN PROGRESS</output>
     `;
+    this.panel.hidden = true;
     this.title = this.panel.querySelector('.spider-tutorial-title');
     this.objective = this.panel.querySelector('.spider-tutorial-objective');
     this.hint = this.panel.querySelector('.spider-tutorial-hint');
@@ -41,7 +42,33 @@ export class SpiderTutorialPanel {
     });
     document.getElementById('app')?.append(this.panel);
     this.removeDrag = makeDialogDraggable(this.panel, this.panel.querySelector('.spider-dialog-grip'));
+    this.createTargetSign();
     this.completed = false;
+  }
+
+  createTargetSign() {
+    const targets = {
+      0: { x: 640, y: 335 },
+      1: { x: this.scene.climbables[0]?.x + (this.scene.climbables[0]?.w || 0) / 2 || 384, y: 125 },
+      2: { x: 470, y: 215 },
+      3: { x: this.scene.climbables[0]?.x + (this.scene.climbables[0]?.w || 0) / 2 || 384, y: 125 },
+      4: { x: 500, y: 120 },
+      5: { x: 555, y: 335 },
+    };
+    const target = targets[this.levelIndex] || targets[0];
+    this.targetGraphics = this.scene.add.graphics().setDepth(1240);
+    this.targetGraphics.lineStyle(1, 0x6c8068, 1);
+    this.targetGraphics.lineBetween(target.x, target.y, target.x, target.y - 18);
+    this.targetGraphics.fillStyle(0xfff1a8, 1);
+    this.targetGraphics.fillTriangle(target.x, target.y - 18, target.x + 7, target.y - 14, target.x, target.y - 10);
+    this.targetSign = this.scene.add.rectangle(target.x, target.y - 27, 78, 14, 0x24312a, 0.96)
+      .setStrokeStyle(1, 0x718467)
+      .setDepth(1241);
+    this.targetLabel = this.scene.add.text(target.x, target.y - 27, 'REACH HERE', {
+      fontFamily: 'monospace',
+      fontSize: '6px',
+      color: '#fff1a8',
+    }).setOrigin(0.5).setDepth(1242);
   }
 
   announce() {
@@ -78,5 +105,8 @@ export class SpiderTutorialPanel {
   destroy() {
     this.removeDrag?.();
     this.panel.remove();
+    this.targetGraphics?.destroy();
+    this.targetSign?.destroy();
+    this.targetLabel?.destroy();
   }
 }

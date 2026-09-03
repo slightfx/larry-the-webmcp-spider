@@ -9,7 +9,7 @@ export class SpiderHelpPanel {
     this.panel.innerHTML = `
       <div class="spider-dialog-grip spider-dialog-header">
         <span>HOW TO CONTROL LARRY</span>
-        <button type="button" class="spider-dialog-toggle" aria-label="Minimize dialog" title="Minimize dialog">▾</button>
+        <button type="button" class="spider-dialog-toggle" aria-label="Maximize dialog" title="Maximize dialog">▴</button>
       </div>
       <p>Give Larry a plain-English command, or use the WebMCP tools directly.</p>
       <h2>COMMAND BOX</h2>
@@ -37,6 +37,7 @@ export class SpiderHelpPanel {
         <div>stop</div>
       </div>
     `;
+    this.panel.classList.add('is-minimized');
     this.dialogToggle = this.panel.querySelector('.spider-dialog-toggle');
     this.dialogToggle.addEventListener('pointerdown', (event) => event.stopPropagation());
     this.dialogToggle.addEventListener('click', (event) => {

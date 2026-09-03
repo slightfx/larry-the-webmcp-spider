@@ -98,6 +98,22 @@ canvas {
   font: clamp(7px, 0.7vw, 10px)/1.2 monospace;
 }
 
+/* The manual console sits above the command box as one connected control
+   stack. The short bridge also keeps the two draggable sections distinct. */
+#spider-command-panel::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: -12px;
+  left: -1px;
+  right: -1px;
+  height: 12px;
+  box-sizing: border-box;
+  border-left: 1px solid #718467;
+  border-right: 1px solid #718467;
+  background: rgb(36 49 42 / 94%);
+}
+
 #spider-command-panel label,
 #spider-command-panel output {
   display: block;
@@ -253,6 +269,10 @@ canvas {
   background: rgb(36 49 42 / 96%);
   color: #d8e5ce;
   font: clamp(7px, 0.7vw, 10px)/1.2 monospace;
+}
+
+#spider-tutorial-panel[hidden] {
+  display: none;
 }
 
 #spider-tutorial-panel .spider-dialog-header {

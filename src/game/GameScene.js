@@ -5,6 +5,7 @@ import { SpiderVisionRenderer } from './SpiderVisionRenderer.js';
 import { SpiderWebMcpController } from './SpiderWebMcpController.js';
 import { SpiderManualToolPanel } from './SpiderManualToolPanel.js';
 import { SpiderCommandPanel } from './SpiderCommandPanel.js';
+import { SpiderHelpPanel } from './SpiderHelpPanel.js';
 import { SpiderGoalMarker } from './SpiderGoalMarker.js';
 import { SpiderSilkRenderer } from './SpiderSilkRenderer.js';
 import { SpiderMovementSound } from './SpiderMovementSound.js';
@@ -96,6 +97,7 @@ export class GameScene extends Phaser.Scene {
 
     this.webMcpController = new SpiderWebMcpController(this);
     this.spiderGoalMarker = new SpiderGoalMarker(this, this.webMcpController);
+    this.spiderHelpPanel = new SpiderHelpPanel();
     this.spiderManualToolPanel = new SpiderManualToolPanel(this.webMcpController);
     this.spiderCommandPanel = new SpiderCommandPanel(this.webMcpController, {
       onPlanUpdate: (route) => this.spiderGoalMarker.setPlanRoute(route),
@@ -103,6 +105,7 @@ export class GameScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.webMcpController.destroy();
       this.spiderGoalMarker.destroy();
+      this.spiderHelpPanel.destroy();
       this.spiderManualToolPanel.destroy();
       this.spiderCommandPanel.destroy();
       this.spiderSilkRenderer.destroy();

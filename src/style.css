@@ -45,6 +45,7 @@ body {
 
 .spider-locked #spider-command-panel,
 .spider-locked #spider-manual-tool-panel { display: none; }
+.spider-authenticated #spider-manual-tool-panel { display: none; }
 .spider-guest #spider-command-panel { display: none; }
 .spider-start-screen {
   position: absolute;

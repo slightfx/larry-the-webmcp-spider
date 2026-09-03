@@ -36,6 +36,7 @@ startScreen.querySelector('form').addEventListener('submit', async (event) => {
     if (!response.ok || !result.ok) throw new Error(result.error || 'Incorrect password.');
     app.classList.remove('spider-locked');
     app.classList.remove('spider-guest');
+    app.classList.add('spider-authenticated');
     window.dispatchEvent(new Event('spider-access-mode-change'));
     startScreen.remove();
   } catch (error) {

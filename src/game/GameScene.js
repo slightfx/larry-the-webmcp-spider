@@ -109,7 +109,7 @@ export class GameScene extends Phaser.Scene {
       const appRect = document.getElementById('app')?.getBoundingClientRect();
       if (!appRect?.height) return;
       const left = '7%';
-      const width = '84%';
+      const width = '42%';
       const manualTop = appRect.height * 0.11;
       manual.style.left = left;
       manual.style.width = width;
@@ -121,6 +121,7 @@ export class GameScene extends Phaser.Scene {
     this.onDialogLayoutChange = () => requestAnimationFrame(this.layoutControlDialogs);
     this.spiderManualToolPanel.form.addEventListener('dialog-layout-change', this.onDialogLayoutChange);
     this.spiderCommandPanel.form.addEventListener('dialog-layout-change', this.onDialogLayoutChange);
+    window.addEventListener('spider-access-mode-change', this.onDialogLayoutChange);
     this.layoutControlDialogs();
     requestAnimationFrame(this.layoutControlDialogs);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -131,6 +132,7 @@ export class GameScene extends Phaser.Scene {
       this.spiderCommandPanel.destroy();
       this.spiderManualToolPanel.form.removeEventListener('dialog-layout-change', this.onDialogLayoutChange);
       this.spiderCommandPanel.form.removeEventListener('dialog-layout-change', this.onDialogLayoutChange);
+      window.removeEventListener('spider-access-mode-change', this.onDialogLayoutChange);
       this.spiderSilkRenderer.destroy();
       this.wormManager.destroy();
     });

@@ -13,7 +13,7 @@ export class SpiderCommandPanel {
     this.form = document.createElement('form');
     this.form.id = 'spider-command-panel';
     this.form.innerHTML = `
-      <div class="spider-dialog-header"><span>COMMAND THE SPIDER</span><button type="button" class="spider-dialog-toggle" aria-label="Minimize dialog" title="Minimize dialog">▾</button></div>
+      <div class="spider-dialog-grip spider-dialog-header"><span>COMMAND THE SPIDER</span><button type="button" class="spider-dialog-toggle" aria-label="Minimize dialog" title="Minimize dialog">▾</button></div>
       <div class="spider-command-row">
         <input id="spider-command-input" name="command" maxlength="240"
           autocomplete="off" placeholder="walk left, pounce…" aria-describedby="spider-command-status">

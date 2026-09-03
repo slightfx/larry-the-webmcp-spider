@@ -7,7 +7,6 @@ import { SpiderManualToolPanel } from './SpiderManualToolPanel.js';
 import { SpiderCommandPanel } from './SpiderCommandPanel.js';
 import { SpiderHelpPanel } from './SpiderHelpPanel.js';
 import { SpiderGoalMarker } from './SpiderGoalMarker.js';
-import { SpiderSpectacle } from './SpiderSpectacle.js';
 import { SpiderSilkRenderer } from './SpiderSilkRenderer.js';
 import { SpiderMovementSound } from './SpiderMovementSound.js';
 import { WormManager } from './WormManager.js';
@@ -90,7 +89,6 @@ export class GameScene extends Phaser.Scene {
         yoyo: true,
         ease: 'Quad.Out',
       });
-      this.spiderSpectacle?.onHuntSuccess(count, bug);
     };
     this.spider.onDamaged = (damage) => {
       this.cameras.main.shake(120, Math.min(0.009, 0.002 + damage * 0.0002));
@@ -99,7 +97,6 @@ export class GameScene extends Phaser.Scene {
     };
 
     this.webMcpController = new SpiderWebMcpController(this);
-    this.spiderSpectacle = new SpiderSpectacle(this);
     this.spiderGoalMarker = new SpiderGoalMarker(this, this.webMcpController);
     this.spiderHelpPanel = new SpiderHelpPanel();
     this.spiderManualToolPanel = new SpiderManualToolPanel(this.webMcpController);
@@ -129,7 +126,6 @@ export class GameScene extends Phaser.Scene {
     requestAnimationFrame(this.layoutControlDialogs);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.webMcpController.destroy();
-      this.spiderSpectacle.destroy();
       this.spiderGoalMarker.destroy();
       this.spiderHelpPanel.destroy();
       this.spiderManualToolPanel.destroy();
@@ -193,7 +189,6 @@ export class GameScene extends Phaser.Scene {
     this.wormManager.update(dt);
     this.spiderSilkRenderer.update(_time);
     this.webMcpController.syncState();
-    this.spiderSpectacle.update();
     this.spiderGoalMarker.update();
     this.spiderManualToolPanel.update();
     this.bugManager.update(dt);

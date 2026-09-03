@@ -47,26 +47,31 @@ export class SpiderTutorialPanel {
   }
 
   createTargetSign() {
+    const tree = this.scene.climbables[0];
+    const branch = this.scene.platforms.find((platform) => platform.h <= 10);
+    const fly = this.scene.bugManager?.bugs.find((bug) => bug.type === 'fly');
     const targets = {
       0: { x: 640, y: 335 },
-      1: { x: this.scene.climbables[0]?.x + (this.scene.climbables[0]?.w || 0) / 2 || 384, y: 125 },
-      2: { x: 470, y: 215 },
-      3: { x: this.scene.climbables[0]?.x + (this.scene.climbables[0]?.w || 0) / 2 || 384, y: 125 },
-      4: { x: 500, y: 120 },
+      1: { x: tree ? tree.x + tree.w + 28 : 420, y: tree?.y + 30 || 155 },
+      2: { x: branch ? branch.x + branch.w / 2 : 470, y: branch?.y || 215 },
+      3: { x: tree ? tree.x + tree.w + 28 : 420, y: tree?.y + 30 || 155 },
+      4: { x: fly?.x || 500, y: fly?.y || 180 },
       5: { x: 555, y: 335 },
     };
     const target = targets[this.levelIndex] || targets[0];
+    const signX = target.x;
+    const signY = target.y - 23;
     this.targetGraphics = this.scene.add.graphics().setDepth(1240);
     this.targetGraphics.lineStyle(1, 0x6c8068, 1);
-    this.targetGraphics.lineBetween(target.x, target.y, target.x, target.y - 18);
+    this.targetGraphics.lineBetween(target.x, target.y, signX, signY + 5);
     this.targetGraphics.fillStyle(0xfff1a8, 1);
-    this.targetGraphics.fillTriangle(target.x, target.y - 18, target.x + 7, target.y - 14, target.x, target.y - 10);
-    this.targetSign = this.scene.add.rectangle(target.x, target.y - 27, 78, 14, 0x24312a, 0.96)
+    this.targetGraphics.fillTriangle(target.x, signY + 5, target.x + 5, signY + 8, target.x, signY + 11);
+    this.targetSign = this.scene.add.rectangle(signX, signY, 48, 10, 0x24312a, 0.96)
       .setStrokeStyle(1, 0x718467)
       .setDepth(1241);
-    this.targetLabel = this.scene.add.text(target.x, target.y - 27, 'REACH HERE', {
+    this.targetLabel = this.scene.add.text(signX, signY, 'REACH HERE', {
       fontFamily: 'monospace',
-      fontSize: '6px',
+      fontSize: '4px',
       color: '#fff1a8',
     }).setOrigin(0.5).setDepth(1242);
   }

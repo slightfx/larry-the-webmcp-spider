@@ -95,6 +95,7 @@ export class SpiderManualToolPanel {
       const minimized = this.form.classList.toggle('is-minimized');
       this.dialogToggle.textContent = minimized ? '▴' : '▾';
       this.dialogToggle.setAttribute('aria-label', minimized ? 'Maximize dialog' : 'Minimize dialog');
+      this.form.dispatchEvent(new Event('dialog-layout-change'));
     });
     this.onSelect = () => this.renderFields();
     this.onSubmit = (event) => this.execute(event);

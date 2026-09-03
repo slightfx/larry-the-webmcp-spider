@@ -127,6 +127,22 @@ export class GameScene extends Phaser.Scene {
     this.spiderCommandPanel = new SpiderCommandPanel(this.webMcpController, {
       onPlanUpdate: (route) => this.spiderGoalMarker.setPlanRoute(route),
     });
+    this.layoutControlDialogs = () => {
+      const manual = this.spiderManualToolPanel.form;
+      const command = this.spiderCommandPanel.form;
+      const appRect = document.getElementById('app')?.getBoundingClientRect();
+      if (!appRect?.height) return;
+      const left = '5%';
+      const manualTop = appRect.height * 0.28;
+      manual.style.left = left;
+      manual.style.top = `${(manualTop / appRect.height) * 100}%`;
+      command.style.left = left;
+      command.style.top = `${((manualTop + manual.getBoundingClientRect().height + 1) / appRect.height) * 100}%`;
+    };
+    this.onDialogLayoutChange = () => requestAnimationFrame(this.layoutControlDialogs);
+    this.spiderManualToolPanel.form.addEventListener('dialog-layout-change', this.onDialogLayoutChange);
+    this.spiderCommandPanel.form.addEventListener('dialog-layout-change', this.onDialogLayoutChange);
+    requestAnimationFrame(this.layoutControlDialogs);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.webMcpController.destroy();
       this.spiderGoalMarker.destroy();
@@ -134,6 +150,8 @@ export class GameScene extends Phaser.Scene {
       this.spiderHelpPanel.destroy();
       this.spiderManualToolPanel.destroy();
       this.spiderCommandPanel.destroy();
+      this.spiderManualToolPanel.form.removeEventListener('dialog-layout-change', this.onDialogLayoutChange);
+      this.spiderCommandPanel.form.removeEventListener('dialog-layout-change', this.onDialogLayoutChange);
       this.spiderSilkRenderer.destroy();
       this.wormManager.destroy();
     });

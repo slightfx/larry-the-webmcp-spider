@@ -51,6 +51,7 @@ export class SpiderCommandPanel {
       const minimized = this.form.classList.toggle('is-minimized');
       this.dialogToggle.textContent = minimized ? '▴' : '▾';
       this.dialogToggle.setAttribute('aria-label', minimized ? 'Maximize dialog' : 'Minimize dialog');
+      this.form.dispatchEvent(new Event('dialog-layout-change'));
     });
     this.webMcpConnected = false;
     this.voice = new DeepgramVoice({

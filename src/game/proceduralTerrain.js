@@ -150,19 +150,3 @@ export function generateProceduralTerrain(seed, options = {}) {
     decorations: { ferns, stones, mushrooms, canopy, stems },
   };
 }
-
-export function generateIntroTerrain(seed, options = {}) {
-  const terrain = generateProceduralTerrain(seed, options);
-  const ground = terrain.platforms.find((platform) => platform.h > 10);
-  terrain.platforms = [ground];
-  terrain.climbables = [];
-  terrain.spawnX = 92;
-  terrain.decorations = {
-    ferns: [],
-    stones: [],
-    mushrooms: [],
-    canopy: [],
-    stems: [],
-  };
-  return terrain;
-}

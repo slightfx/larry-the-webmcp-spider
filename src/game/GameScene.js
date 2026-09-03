@@ -11,7 +11,6 @@ import { SpiderSilkRenderer } from './SpiderSilkRenderer.js';
 import { SpiderMovementSound } from './SpiderMovementSound.js';
 import { WormManager } from './WormManager.js';
 import {
-  generateIntroTerrain,
   generateProceduralTerrain,
   getTerrainSway,
 } from './proceduralTerrain.js';
@@ -27,18 +26,6 @@ export class GameScene extends Phaser.Scene {
     super('game');
   }
 
-  init() {
-    this.introComplete = this.readIntroCompletion();
-  }
-
-  readIntroCompletion() {
-    try {
-      return globalThis.localStorage?.getItem('larry-intro-complete') === 'true';
-    } catch {
-      return false;
-    }
-  }
-
   create() {
     this.deathRestartAt = 0;
     this.cameras.main.setBackgroundColor('#bfd3b5');
@@ -51,16 +38,12 @@ export class GameScene extends Phaser.Scene {
       height: WORLD_HEIGHT,
       groundY: GROUND_Y,
     };
-    this.terrain = this.introComplete
-      ? generateProceduralTerrain(terrainSeed, terrainOptions)
-      : generateIntroTerrain(terrainSeed, terrainOptions);
+    this.terrain = generateProceduralTerrain(terrainSeed, terrainOptions);
     this.platforms = this.terrain.platforms;
     this.climbables = this.terrain.climbables;
 
     this.drawTerrariumBackground();
-    if (!this.introComplete) this.drawIntroBackdrop();
     this.drawHabitat();
-    if (!this.introComplete) this.createIntroCave();
     this.wormManager = new WormManager(this, {
       groundY: GROUND_Y,
       width: WORLD_WIDTH,
@@ -125,11 +108,14 @@ export class GameScene extends Phaser.Scene {
       const command = this.spiderCommandPanel.form;
       const appRect = document.getElementById('app')?.getBoundingClientRect();
       if (!appRect?.height) return;
-      const left = '5%';
-      const manualTop = appRect.height * 0.28;
+      const left = '7%';
+      const width = '84%';
+      const manualTop = appRect.height * 0.11;
       manual.style.left = left;
+      manual.style.width = width;
       manual.style.top = `${(manualTop / appRect.height) * 100}%`;
       command.style.left = left;
+      command.style.width = width;
       command.style.top = `${((manualTop + manual.getBoundingClientRect().height + 1) / appRect.height) * 100}%`;
     };
     this.onDialogLayoutChange = () => requestAnimationFrame(this.layoutControlDialogs);
@@ -200,7 +186,6 @@ export class GameScene extends Phaser.Scene {
     this.wormManager.update(dt);
     this.spiderSilkRenderer.update(_time);
     this.webMcpController.syncState();
-    this.checkIntroCave();
     this.spiderGoalMarker.update();
     this.spiderManualToolPanel.update();
     this.bugManager.update(dt);
@@ -225,49 +210,6 @@ export class GameScene extends Phaser.Scene {
       `${prefix}HP ${this.spider.health}/${this.spider.maxHealth}  ` +
       `SIZE ${size}%  SPEED ${speed}`,
     );
-  }
-
-  drawIntroBackdrop() {
-    const graphics = this.add.graphics();
-    graphics.fillStyle(0x976f22, 1);
-    graphics.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-    graphics.fillStyle(0xf6bb61, 1);
-    graphics.fillRect(28, 28, WORLD_WIDTH - 56, GROUND_Y - 28);
-    graphics.fillStyle(0x6a4a25, 1);
-    graphics.fillRect(28, GROUND_Y - 2, WORLD_WIDTH - 56, 4);
-  }
-
-  createIntroCave() {
-    this.introCave = { x: 650, y: GROUND_Y };
-    const graphics = this.add.graphics().setDepth(16);
-    graphics.fillStyle(0xb8b8b8, 1);
-    graphics.fillRoundedRect(this.introCave.x - 17, this.introCave.y - 34, 34, 34, 8);
-    graphics.fillStyle(0x976f22, 1);
-    graphics.fillRect(this.introCave.x - 13, this.introCave.y - 27, 26, 27);
-    graphics.lineStyle(2, 0x6a4a25, 1);
-    graphics.strokeRoundedRect(this.introCave.x - 17, this.introCave.y - 34, 34, 34, 8);
-    this.introCave.graphics = graphics;
-    this.introPrompt = this.add.text(this.introCave.x, 52, 'WALK TO THE CAVE', {
-      fontFamily: 'monospace',
-      fontSize: '8px',
-      color: '#fff1a8',
-      backgroundColor: '#24312acc',
-      padding: { x: 5, y: 3 },
-    }).setOrigin(0.5).setDepth(1100);
-  }
-
-  checkIntroCave() {
-    if (this.introComplete || !this.introCave || this.introTransitioning) return;
-    if (this.spider.position.x < this.introCave.x - 22) return;
-    this.introTransitioning = true;
-    this.webMcpController.stopAllActions();
-    this.spider.sayCommand?.('I FOUND MY CAVE!');
-    try {
-      globalThis.localStorage?.setItem('larry-intro-complete', 'true');
-    } catch {
-      // Continue even when persistence is unavailable.
-    }
-    this.time.delayedCall(900, () => this.scene.restart());
   }
 
   explodeAndRespawnSpider() {

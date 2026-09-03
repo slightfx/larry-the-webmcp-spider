@@ -42,38 +42,36 @@ export class SpiderTutorialPanel {
     });
     document.getElementById('app')?.append(this.panel);
     this.removeDrag = makeDialogDraggable(this.panel, this.panel.querySelector('.spider-dialog-grip'));
-    this.createTargetSign();
+    this.createGoalCave();
     this.completed = false;
   }
 
-  createTargetSign() {
+  createGoalCave() {
     const tree = this.scene.climbables[0];
+    const treeBranch = tree
+      ? this.scene.platforms.find((platform) => platform.treeSeed === tree.seed)
+      : null;
     const branch = this.scene.platforms.find((platform) => platform.h <= 10);
-    const fly = this.scene.bugManager?.bugs.find((bug) => bug.type === 'fly');
     const targets = {
-      0: { x: 640, y: 335 },
-      1: { x: tree ? tree.x + tree.w + 28 : 420, y: tree?.y + 30 || 155 },
+      0: { x: 640, y: 358 },
+      1: { x: treeBranch ? treeBranch.x + treeBranch.w / 2 : 420, y: treeBranch?.y || 220 },
       2: { x: branch ? branch.x + branch.w / 2 : 470, y: branch?.y || 215 },
-      3: { x: tree ? tree.x + tree.w + 28 : 420, y: tree?.y + 30 || 155 },
-      4: { x: fly?.x || 500, y: fly?.y || 180 },
-      5: { x: 555, y: 335 },
+      3: { x: 500, y: 358 },
+      4: { x: 600, y: 358 },
+      5: { x: 555, y: 358 },
     };
     const target = targets[this.levelIndex] || targets[0];
-    const signX = target.x;
-    const signY = target.y - 23;
+    this.scene.tutorialTarget = target;
     this.targetGraphics = this.scene.add.graphics().setDepth(1240);
+    this.targetGraphics.fillStyle(0x24312a, 1);
+    this.targetGraphics.fillEllipse(target.x, target.y - 7, 22, 16);
+    this.targetGraphics.fillStyle(0x18231d, 1);
+    this.targetGraphics.fillEllipse(target.x, target.y - 5, 13, 11);
+    this.targetGraphics.fillStyle(0x718467, 1);
+    this.targetGraphics.fillRect(target.x - 13, target.y - 2, 5, 2);
+    this.targetGraphics.fillRect(target.x + 8, target.y - 2, 5, 2);
     this.targetGraphics.lineStyle(1, 0x6c8068, 1);
-    this.targetGraphics.lineBetween(target.x, target.y, signX, signY + 5);
-    this.targetGraphics.fillStyle(0xfff1a8, 1);
-    this.targetGraphics.fillTriangle(target.x, signY + 5, target.x + 5, signY + 8, target.x, signY + 11);
-    this.targetSign = this.scene.add.rectangle(signX, signY, 48, 10, 0x24312a, 0.96)
-      .setStrokeStyle(1, 0x718467)
-      .setDepth(1241);
-    this.targetLabel = this.scene.add.text(signX, signY, 'REACH HERE', {
-      fontFamily: 'monospace',
-      fontSize: '4px',
-      color: '#fff1a8',
-    }).setOrigin(0.5).setDepth(1242);
+    this.targetGraphics.lineBetween(target.x - 11, target.y - 14, target.x + 11, target.y - 14);
   }
 
   announce() {
@@ -111,7 +109,5 @@ export class SpiderTutorialPanel {
     this.removeDrag?.();
     this.panel.remove();
     this.targetGraphics?.destroy();
-    this.targetSign?.destroy();
-    this.targetLabel?.destroy();
   }
 }

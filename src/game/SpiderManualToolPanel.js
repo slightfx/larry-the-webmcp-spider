@@ -73,7 +73,7 @@ export class SpiderManualToolPanel {
     this.form.id = 'spider-manual-tool-panel';
     this.form.setAttribute('aria-label', 'Manual WebMCP tool console');
     this.form.innerHTML = `
-      <div class="spider-dialog-grip spider-dialog-header"><span>MANUAL TOOL CONSOLE</span><button type="button" class="spider-dialog-toggle" aria-label="Maximize dialog" title="Maximize dialog">▴</button></div>
+      <div class="spider-dialog-grip spider-dialog-header"><span>MANUAL TOOL CONSOLE</span><button type="button" class="spider-dialog-toggle" aria-label="Minimize dialog" title="Minimize dialog">▾</button></div>
       <label class="spider-manual-tool-picker">
         <span>METHOD</span>
         <select name="tool" aria-label="Spider method"></select>
@@ -82,7 +82,6 @@ export class SpiderManualToolPanel {
       <button type="submit">EXECUTE</button>
       <output aria-live="polite">READY</output>
     `;
-    this.form.classList.add('is-minimized');
     this.select = this.form.querySelector('select');
     this.fields = this.form.querySelector('.spider-manual-fields');
     this.button = this.form.querySelector('button');

@@ -113,14 +113,15 @@ export class GameScene extends Phaser.Scene {
       const manualTop = appRect.height * 0.11;
       manual.style.left = left;
       manual.style.width = width;
-      manual.style.top = `${(manualTop / appRect.height) * 100}%`;
+      manual.style.top = `${manualTop}px`;
       command.style.left = left;
       command.style.width = width;
-      command.style.top = `${((manualTop + manual.getBoundingClientRect().height + 1) / appRect.height) * 100}%`;
+      command.style.top = `${manualTop + manual.getBoundingClientRect().height + 1}px`;
     };
     this.onDialogLayoutChange = () => requestAnimationFrame(this.layoutControlDialogs);
     this.spiderManualToolPanel.form.addEventListener('dialog-layout-change', this.onDialogLayoutChange);
     this.spiderCommandPanel.form.addEventListener('dialog-layout-change', this.onDialogLayoutChange);
+    this.layoutControlDialogs();
     requestAnimationFrame(this.layoutControlDialogs);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.webMcpController.destroy();

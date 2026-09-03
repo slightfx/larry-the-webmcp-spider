@@ -256,6 +256,7 @@ export class SpiderWebMcpController {
     noop(`[WebMCP] call → ${tool.name}`, { arguments: args, source });
     try {
       this.validateToolArguments(tool, args);
+      this.scene.spiderSpectacle?.toolCalled(tool.name, args, source);
       if (source === 'browser') {
         this.lastQueueError = null;
         const requested = { tool: tool.name, arguments: args };
@@ -280,12 +281,14 @@ export class SpiderWebMcpController {
       const result = tool.execute(args);
       if (!tool.annotations?.readOnlyHint) this.markToolActive(tool.name);
       noop(`[WebMCP] result ← ${tool.name}`, result);
+      this.scene.spiderSpectacle?.toolResult(tool.name, result);
       if (announce) this.announceToolCall(tool.name, args);
       return result;
     } catch (error) {
       noop(`[WebMCP] error ← ${tool.name}`, error);
       const message = error instanceof Error ? error.message : String(error);
       const quip = this.getInvalidToolQuip(message);
+      this.scene.spiderSpectacle?.toolError(tool.name, message);
       this.announceCommand(quip);
       return {
         accepted: false,
@@ -510,6 +513,7 @@ export class SpiderWebMcpController {
     if (nextState === this.controlState) return false;
     const previousState = this.controlState;
     this.controlState = nextState;
+    this.scene.spiderSpectacle?.onStateChange(previousState, nextState);
     const now = Number(this.scene.time?.now) || performance.now();
     if (now - this.lastLoopTransitionAt > 4000) this.loopTransitionCounts.clear();
     this.lastLoopTransitionAt = now;

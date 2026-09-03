@@ -228,7 +228,7 @@ canvas {
   z-index: 3;
   left: 2%;
   top: 2%;
-  width: 94%;
+  width: 52%;
   max-height: 90%;
   box-sizing: border-box;
   overflow-y: auto;
@@ -236,44 +236,44 @@ canvas {
   border: 1px solid #718467;
   background: rgb(36 49 42 / 96%);
   color: #d8e5ce;
-  font: clamp(9px, 1.1vw, 14px)/1.2 monospace;
+  font: clamp(7px, 0.7vw, 10px)/1.2 monospace;
   scrollbar-width: thin;
   scrollbar-color: #718467 transparent;
 }
 
 #spider-help-panel .spider-dialog-header {
-  margin-bottom: 14px;
+  margin-bottom: 8px;
   color: #d8c893;
 }
 
 #spider-help-panel p {
-  margin: 8px 0 14px;
+  margin: 6px 0 9px;
 }
 
 #spider-help-panel h2 {
-  margin: 0 0 8px;
+  margin: 0 0 5px;
   color: #fff1a8;
   font: inherit;
   font-weight: 700;
 }
 
 .spider-help-examples {
-  margin: 0 0 14px;
+  margin: 0 0 9px;
 }
 
 .spider-help-examples div {
-  margin: 0 0 4px;
-  padding: 5px 7px;
+  margin: 0 0 3px;
+  padding: 4px 5px;
   background: #314338;
   color: #e4d28f;
 }
 
 .spider-help-tools {
-  margin-bottom: 14px;
+  margin-bottom: 9px;
 }
 
 .spider-help-tools div {
-  margin: 4px 0;
+  margin: 3px 0;
 }
 
 .spider-help-tools strong {

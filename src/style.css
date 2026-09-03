@@ -257,42 +257,6 @@ canvas {
   scrollbar-color: #718467 transparent;
 }
 
-#spider-tutorial-panel {
-  position: absolute;
-  z-index: 7;
-  left: 53%;
-  top: 2%;
-  width: 42%;
-  box-sizing: border-box;
-  padding: clamp(5px, 0.55vw, 8px);
-  border: 1px solid #718467;
-  background: rgb(36 49 42 / 96%);
-  color: #d8e5ce;
-  font: clamp(7px, 0.7vw, 10px)/1.2 monospace;
-}
-
-#spider-tutorial-panel[hidden] {
-  display: none;
-}
-
-#spider-tutorial-panel .spider-dialog-header {
-  margin-bottom: 5px;
-  color: #d8c893;
-}
-
-.spider-tutorial-title,
-.spider-tutorial-objective,
-.spider-tutorial-hint,
-.spider-tutorial-status {
-  display: block;
-  margin: 3px 0;
-}
-
-.spider-tutorial-title { color: #fff1a8; }
-.spider-tutorial-hint { color: #e4d28f; }
-.spider-tutorial-status { color: #9fbd93; }
-.spider-tutorial-panel.is-complete { border-color: #fff1a8; }
-
 #spider-help-panel .spider-dialog-header {
   margin-bottom: 8px;
   color: #d8c893;

@@ -98,6 +98,46 @@ VITE_API_BASE_URL=https://your-api.example.com npm run build
 
 The browser's WebMCP APIs are experimental. If WebMCP is unavailable, the game remains playable manually, but agent commands and planning are disabled.
 
+## Record ten demo clips
+
+The repository includes an automated Playwright recorder for producing ten named WebMCP demo clips. Start the frontend first, then install Playwright once:
+
+```bash
+npm install -D playwright
+npx playwright install chromium
+```
+
+Run the recorder:
+
+```bash
+npm run record:clips
+```
+
+The clips are written as individual `.webm` files in `clips/`. Each clip opens a fresh deterministic terrarium and records approximately 10–15 seconds of one action. The default URL is `http://localhost:5173/?seed=20260904`; override it for a deployed app:
+
+```bash
+LARRY_URL=https://your-live-app.example.com npm run record:clips
+```
+
+By default, the recorder uses the visible Manual Tool Console and captures ten two-step sequences such as `move_spider → stop_spider`, `move_spider → climb_tree`, `climb_tree → hunt_prey`, and `climb_tree → get_to_ground`. This makes each clip demonstrate how a person can issue ordered WebMCP actions. It launches headed Chromium with WebMCP enabled. To call the browser API directly instead, use `RECORD_MODE=api`.
+
+To record a command-box demo using the Ollama adapter:
+
+```bash
+npm run dev:api
+npm run record:ollama-demo
+```
+
+The script records at 1920×1080, shows only the **COMMAND THE SPIDER** dialog, skips the access screen in local mode, types ten imperfect bug-like commands one after another, selects Ollama Cloud, presses **GO** for each command, waits for every goal to complete, and mixes the game's actual Web Audio effects with spoken narration for each command. The ten goals are: climb to the last tree's top branch, return to the ground, hunt an isopod, climb the first tree's bottom branch, reach the right edge, jump, hunt a springtail, climb the middle tree's top branch, reach the left edge, and jump. The final video is saved as `server/clips-final/ollama-command-demo.mp4` with H.264 video and AAC audio. The API must have a working `OLLAMA_API_KEY` in `server/.env`. It launches headed Chromium with WebMCP enabled. For a browser without native WebMCP, `MOCK_WEBMCP=true` enables a local-only fallback for development recordings.
+
+If Playwright does not find a Chrome channel automatically, point it at a headed Chrome for Testing binary:
+
+```bash
+PLAYWRIGHT_EXECUTABLE_PATH="/path/to/Google Chrome for Testing" npm run record:ollama-demo
+```
+
+The recorder passes `--enable-experimental-web-platform-features` and `--enable-features=WebMCPTesting,DevToolsWebMCPSupport` to Chromium. Native WebMCP recording should use `HEADLESS` unset (or `HEADLESS=false`); Chrome's WebMCP test support is not intended for headless recording.
+
 ## Inspect WebMCP tools in Chrome DevTools
 
 Open the deployed app in Chrome, open DevTools with `⌘ Option I` on macOS or `Ctrl Shift I` on Windows/Linux, and select the **Console** tab. Make sure the Console's JavaScript context is the app's page, not an iframe.

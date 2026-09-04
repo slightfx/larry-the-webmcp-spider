@@ -4,6 +4,7 @@ import { GameScene } from './game/GameScene.js';
 import { apiUrl } from './game/apiClient.js';
 
 const app = document.getElementById('app');
+const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(globalThis.location?.hostname);
 app.classList.add('spider-locked');
 const startScreen = document.createElement('section');
 startScreen.className = 'spider-start-screen';
@@ -15,7 +16,7 @@ startScreen.innerHTML = `
     <p><b>AI model:</b> Ollama Cloud uses <code>gemma4:31b-cloud</code>. Lightning AI is available as an alternative.</p>
     <p><b>Voice commands:</b> The <b>VOICE</b> button records your microphone input in the browser. The recording is sent to the server, where Deepgram transcribes it using Nova-3; the transcript is then submitted as a normal Larry command and can be executed or planned.</p>
     <p><b>WebMCP tools</b> are safe game actions exposed to the model: move Larry, jump, climb trees, hunt prey, stop, and return to the ground. The game’s purpose is to experiment with tool-using AI while helping Larry explore his tiny habitat.</p>
-    <p><b>AI access requires the password.</b> Without it, you can play manually, but the AI command, planning, and voice tools are unavailable.</p>
+    <p><b>${isLocalhost ? 'LOCAL DEVELOPMENT MODE.' : 'AI access requires the password.'}</b> ${isLocalhost ? 'Password protection is disabled on localhost.' : 'Without it, you can play manually, but the AI command, planning, and voice tools are unavailable.'}</p>
       <form class="spider-unlock-form">
       <label for="spider-password">ACCESS PASSWORD</label>
       <div><input id="spider-password" type="password" autocomplete="current-password" required><button type="submit">ENTER</button></div>
@@ -49,6 +50,14 @@ startScreen.querySelector('.spider-guest-button').addEventListener('click', () =
   window.dispatchEvent(new Event('spider-access-mode-change'));
   startScreen.remove();
 });
+
+if (isLocalhost) {
+  app.classList.remove('spider-locked');
+  app.classList.remove('spider-guest');
+  app.classList.add('spider-authenticated');
+  window.dispatchEvent(new Event('spider-access-mode-change'));
+  startScreen.remove();
+}
 
 const config = {
   type: Phaser.AUTO,

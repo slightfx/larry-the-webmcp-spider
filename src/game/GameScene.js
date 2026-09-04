@@ -63,6 +63,23 @@ export class GameScene extends Phaser.Scene {
       { stones: this.terrain.decorations.stones, groundY: GROUND_Y },
     );
     this.spiderMovementSound = new SpiderMovementSound(this.sound, this.spider);
+    if (import.meta.env.DEV) {
+      globalThis.__larryAudioDebug = {
+        manager: this.sound.constructor?.name,
+        has_context: Boolean(this.sound.context),
+        has_destination: Boolean(this.sound.destination),
+      };
+    }
+    this.installAudioCapture = () => {
+      if (!import.meta.env.DEV || globalThis.__larryAudioCapture) return;
+      const context = this.sound.context;
+      if (!context?.createMediaStreamDestination) return;
+      const audioCapture = context.createMediaStreamDestination();
+      (this.sound.destination || context.destination)?.connect(audioCapture);
+      globalThis.__larryAudioCapture = audioCapture;
+    };
+    this.installAudioCapture();
+    this.input.on('pointerdown', this.installAudioCapture);
     this.spiderSilkRenderer = new SpiderSilkRenderer(this, this.spider);
 
     this.bugManager = new BugManager(this, this.platforms, this.spider);
@@ -97,26 +114,38 @@ export class GameScene extends Phaser.Scene {
     };
 
     this.webMcpController = new SpiderWebMcpController(this);
+    // Local-only hook for the automated demo recorder. Production builds do
+    // not expose the controller; WebMCP remains the public integration path.
+    if (import.meta.env.DEV) globalThis.__larryWebMcpController = this.webMcpController;
     this.spiderGoalMarker = new SpiderGoalMarker(this, this.webMcpController);
     this.spiderHelpPanel = new SpiderHelpPanel();
-    this.spiderManualToolPanel = new SpiderManualToolPanel(this.webMcpController);
+    this.spiderControlPanel = document.createElement('section');
+    this.spiderControlPanel.id = 'spider-control-panel';
+    this.spiderControlPanel.dataset.dialogShell = 'true';
+    this.spiderControlPanel.setAttribute('aria-label', 'Larry spider controls');
+    document.getElementById('app')?.append(this.spiderControlPanel);
+    this.spiderManualToolPanel = new SpiderManualToolPanel(
+      this.webMcpController,
+      this.spiderControlPanel,
+    );
     this.spiderCommandPanel = new SpiderCommandPanel(this.webMcpController, {
       onPlanUpdate: (route) => this.spiderGoalMarker.setPlanRoute(route),
+      mount: this.spiderControlPanel,
     });
     this.layoutControlDialogs = () => {
       const manual = this.spiderManualToolPanel.form;
       const command = this.spiderCommandPanel.form;
+      const panel = this.spiderControlPanel;
       const appRect = document.getElementById('app')?.getBoundingClientRect();
       if (!appRect?.height) return;
       const left = '7%';
       const width = '42%';
       const manualTop = appRect.height * 0.11;
-      manual.style.left = left;
-      manual.style.width = width;
-      manual.style.top = `${manualTop}px`;
-      command.style.left = left;
-      command.style.width = width;
-      command.style.top = `${manualTop + manual.getBoundingClientRect().height + 1}px`;
+      panel.style.left = left;
+      panel.style.width = width;
+      panel.style.top = `${manualTop}px`;
+      manual.style.width = '100%';
+      command.style.width = '100%';
     };
     this.onDialogLayoutChange = () => requestAnimationFrame(this.layoutControlDialogs);
     this.spiderManualToolPanel.form.addEventListener('dialog-layout-change', this.onDialogLayoutChange);
@@ -126,10 +155,19 @@ export class GameScene extends Phaser.Scene {
     requestAnimationFrame(this.layoutControlDialogs);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.webMcpController.destroy();
+      if (globalThis.__larryWebMcpController === this.webMcpController) {
+        delete globalThis.__larryWebMcpController;
+      }
+      if (globalThis.__larryAudioCapture?.context === this.sound.context) {
+        globalThis.__larryAudioCapture.disconnect();
+        delete globalThis.__larryAudioCapture;
+      }
+      this.input.off('pointerdown', this.installAudioCapture);
       this.spiderGoalMarker.destroy();
       this.spiderHelpPanel.destroy();
       this.spiderManualToolPanel.destroy();
       this.spiderCommandPanel.destroy();
+      this.spiderControlPanel.remove();
       this.spiderManualToolPanel.form.removeEventListener('dialog-layout-change', this.onDialogLayoutChange);
       this.spiderCommandPanel.form.removeEventListener('dialog-layout-change', this.onDialogLayoutChange);
       window.removeEventListener('spider-access-mode-change', this.onDialogLayoutChange);

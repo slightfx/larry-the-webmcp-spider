@@ -82,6 +82,33 @@ export class SpiderMovementSound {
     }, { once: true });
   }
 
+  playHappy() {
+    const context = this.context;
+    if (!context || context.state !== 'running' || !this.destination) return;
+
+    const now = context.currentTime;
+    const notes = [520, 680, 880];
+    notes.forEach((frequency, index) => {
+      const startAt = now + index * 0.09;
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.type = 'triangle';
+      oscillator.frequency.setValueAtTime(frequency, startAt);
+      oscillator.frequency.exponentialRampToValueAtTime(frequency * 1.08, startAt + 0.12);
+      gain.gain.setValueAtTime(0.0001, startAt);
+      gain.gain.exponentialRampToValueAtTime(0.035, startAt + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.15);
+      oscillator.connect(gain);
+      gain.connect(this.destination);
+      oscillator.start(startAt);
+      oscillator.stop(startAt + 0.16);
+      oscillator.addEventListener('ended', () => {
+        oscillator.disconnect();
+        gain.disconnect();
+      }, { once: true });
+    });
+  }
+
   playTap(startAt, frequency, volume) {
     const oscillator = this.context.createOscillator();
     const gain = this.context.createGain();

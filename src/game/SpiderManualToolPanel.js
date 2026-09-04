@@ -61,7 +61,7 @@ export function coerceToolArguments(schema = {}, values = {}) {
 }
 
 export class SpiderManualToolPanel {
-  constructor(controller) {
+  constructor(controller, mount = null) {
     this.controller = controller;
     this.catalog = controller.getToolCatalog();
     this.catalogByName = new Map(this.catalog.map((tool) => [tool.name, tool]));
@@ -79,13 +79,15 @@ export class SpiderManualToolPanel {
         <select name="tool" aria-label="Spider method"></select>
       </label>
       <div class="spider-manual-fields"></div>
+      <output class="spider-manual-active" aria-live="polite">ACTIVE CALL: —</output>
       <button type="submit">EXECUTE</button>
       <output aria-live="polite">READY</output>
     `;
     this.select = this.form.querySelector('select');
     this.fields = this.form.querySelector('.spider-manual-fields');
-    this.button = this.form.querySelector('button');
-    this.status = this.form.querySelector('output');
+    this.button = this.form.querySelector('button[type="submit"]');
+    this.status = this.form.querySelector('output:not(.spider-manual-active)');
+    this.activeCall = this.form.querySelector('.spider-manual-active');
     this.dialogToggle = this.form.querySelector('.spider-dialog-toggle');
     this.dialogToggle.addEventListener('pointerdown', (event) => event.stopPropagation());
     this.dialogToggle.addEventListener('click', (event) => {
@@ -103,8 +105,9 @@ export class SpiderManualToolPanel {
     for (const eventName of ['keydown', 'keyup']) {
       this.form.addEventListener(eventName, (event) => event.stopPropagation());
     }
-    document.getElementById('app')?.append(this.form);
+    (mount || document.getElementById('app'))?.append(this.form);
     this.removeDrag = makeDialogDraggable(this.form, this.form.querySelector('.spider-dialog-grip'));
+    this.removeToolCallListener = this.controller.onToolCall(() => this.update(true));
     this.update(true);
 
     this.controller.ready
@@ -121,8 +124,18 @@ export class SpiderManualToolPanel {
     const signature = JSON.stringify([
       [...available],
       this.controller.activeToolName,
+      this.controller.activeToolArguments,
       this.controller.actionQueue?.[0]?.tool,
     ]);
+    const activeTool = this.controller.activeToolName;
+    const activeArguments = this.controller.activeToolArguments || {};
+    if (activeTool) {
+      this.activeCall.value = `ACTIVE CALL: ${activeTool.toUpperCase()} ${JSON.stringify(activeArguments)}`;
+      this.activeCall.title = JSON.stringify(activeArguments);
+    } else {
+      this.activeCall.value = 'ACTIVE CALL: —';
+      this.activeCall.title = '';
+    }
     if (!force && signature === this.lastAvailabilitySignature) return;
     this.lastAvailabilitySignature = signature;
     const previous = this.select.value;
@@ -143,15 +156,19 @@ export class SpiderManualToolPanel {
     else this.select.value = available.has('move_spider')
       ? 'move_spider'
       : this.catalog.find((tool) => available.has(tool.name))?.name || '';
-    this.renderFields();
+    this.renderFields(activeTool && available.has(activeTool) ? activeArguments : null);
+    if (activeTool && available.has(activeTool) && this.select.value !== activeTool) {
+      this.select.value = activeTool;
+      this.renderFields(activeArguments);
+    }
   }
 
-  renderFields() {
+  renderFields(values = null) {
     const tool = this.catalogByName.get(this.select.value);
     const schema = tool?.input_schema || { properties: {} };
     const required = new Set(schema.required || []);
     const previousTarget = this.fields.querySelector('[name="target"]')?.value;
-    const target = this.moveTarget || previousTarget || 'direction';
+    const target = values?.target || this.moveTarget || previousTarget || 'direction';
     const visibleProperties = Object.entries(schema.properties || {}).filter(([name]) => {
       if (tool?.name !== 'move_spider' || name === 'target') return true;
       if (target === 'edge') return name === 'side';
@@ -174,6 +191,14 @@ export class SpiderManualToolPanel {
       fields.push(empty);
     }
     this.fields.replaceChildren(...fields);
+    if (values) {
+      for (const [name, value] of Object.entries(values)) {
+        const input = this.fields.querySelector(`[name="${name}"]`);
+        if (!input) continue;
+        if (input.type === 'checkbox') input.checked = Boolean(value);
+        else input.value = String(value);
+      }
+    }
     const targetInput = this.fields.querySelector('[name="target"]');
     if (targetInput) {
       targetInput.value = target;
@@ -256,6 +281,7 @@ export class SpiderManualToolPanel {
   destroy() {
     this.select.removeEventListener('change', this.onSelect);
     this.form.removeEventListener('submit', this.onSubmit);
+    this.removeToolCallListener?.();
     this.removeDrag();
     this.form.remove();
   }

@@ -19,31 +19,32 @@ function writePositions(positions) {
 
 export function makeDialogDraggable(panel, handle = panel) {
   if (!panel || !handle) return () => {};
-  const key = panel.id || 'dialog';
+  const dragTarget = panel.closest?.('[data-dialog-shell]') || panel;
+  const key = dragTarget.id || panel.id || 'dialog';
   const positions = readPositions();
   const saved = positions[key];
   if (saved && Number.isFinite(saved.left) && Number.isFinite(saved.top)) {
-    panel.style.left = `${Math.max(0, Math.min(100, saved.left))}%`;
-    panel.style.top = `${Math.max(0, Math.min(100, saved.top))}%`;
+    dragTarget.style.left = `${Math.max(0, Math.min(100, saved.left))}%`;
+    dragTarget.style.top = `${Math.max(0, Math.min(100, saved.top))}%`;
   }
 
   let drag = null;
   const onPointerMove = (event) => {
     if (!drag) return;
-    const app = panel.parentElement;
+    const app = dragTarget.parentElement;
     const rect = app.getBoundingClientRect();
-    const panelRect = panel.getBoundingClientRect();
+    const panelRect = dragTarget.getBoundingClientRect();
     const maxLeft = Math.max(0, rect.width - panelRect.width);
     const maxTop = Math.max(0, rect.height - panelRect.height);
     const left = Math.max(0, Math.min(maxLeft, event.clientX - rect.left - drag.offsetX));
     const top = Math.max(0, Math.min(maxTop, event.clientY - rect.top - drag.offsetY));
-    panel.style.left = `${(left / rect.width) * 100}%`;
-    panel.style.top = `${(top / rect.height) * 100}%`;
+    dragTarget.style.left = `${(left / rect.width) * 100}%`;
+    dragTarget.style.top = `${(top / rect.height) * 100}%`;
   };
   const stop = () => {
     if (!drag) return;
-    const rect = panel.parentElement.getBoundingClientRect();
-    const panelRect = panel.getBoundingClientRect();
+    const rect = dragTarget.parentElement.getBoundingClientRect();
+    const panelRect = dragTarget.getBoundingClientRect();
     positions[key] = {
       left: ((panelRect.left - rect.left) / rect.width) * 100,
       top: ((panelRect.top - rect.top) / rect.height) * 100,

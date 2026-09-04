@@ -9,6 +9,8 @@
     "build": "vite build",
     "test": "node --test",
     "test:hf": "node scripts/test_hf.js",
+    "record:clips": "node scripts/record_clips.mjs",
+    "record:ollama-demo": "node scripts/record_ollama_demo.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -17,6 +19,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.4.0",
+    "playwright": "^1.62.1",
     "vite": "^7.1.3"
   }
 }

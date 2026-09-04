@@ -45,7 +45,6 @@ body {
 
 .spider-locked #spider-command-panel,
 .spider-locked #spider-manual-tool-panel { display: none; }
-.spider-authenticated #spider-manual-tool-panel { display: none; }
 .spider-guest #spider-command-panel { display: none; }
 .spider-start-screen {
   position: absolute;
@@ -224,6 +223,23 @@ canvas {
   color: #9fbd93;
   overflow-wrap: anywhere;
   white-space: normal !important;
+}
+
+/* Keep the command surface focused on input and actions. The verbose agent
+   readouts stay available to screen readers without taking up game space. */
+#spider-command-message,
+#spider-command-plan,
+#spider-command-model,
+#spider-command-status {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
 }
 
 .spider-dialog-link {
@@ -412,6 +428,12 @@ canvas {
   white-space: nowrap;
 }
 
+#spider-manual-tool-panel .spider-manual-active {
+  margin-top: 5px;
+  color: #fff1a8;
+  font-weight: bold;
+}
+
 /* Keep the collapse control consistent with the help dialog, even though
    each dialog has its own generic button styling below/above this rule. */
 #spider-command-panel .spider-dialog-toggle,
@@ -432,4 +454,99 @@ canvas {
 .spider-manual-empty {
   margin: 5px 0;
   color: #8ca184;
+}
+
+/* Terrarium UI finish: the controls should feel like translucent field
+   instruments mounted inside the habitat, rather than bright web dialogs. */
+#spider-command-panel,
+#spider-manual-tool-panel,
+#spider-help-panel {
+  border-color: #7f8f68;
+  background: rgb(48 62 45 / 86%);
+  box-shadow:
+    3px 3px 0 rgb(24 35 29 / 62%),
+    inset 0 0 0 1px rgb(216 200 147 / 12%);
+  backdrop-filter: blur(2px);
+}
+
+#spider-command-panel::before {
+  border-color: #7f8f68;
+  background: rgb(48 62 45 / 86%);
+}
+
+#spider-command-panel input,
+#spider-command-panel button,
+#spider-manual-tool-panel select,
+#spider-manual-tool-panel input,
+#spider-manual-tool-panel textarea,
+#spider-manual-tool-panel button,
+.spider-dialog-toggle {
+  border-color: #7f8f68;
+  background: rgb(216 229 206 / 88%);
+}
+
+#spider-command-panel button,
+#spider-manual-tool-panel button,
+.spider-dialog-toggle {
+  box-shadow: 1px 1px 0 rgb(24 35 29 / 58%);
+}
+
+#spider-command-panel button:hover,
+#spider-command-panel button:focus-visible,
+#spider-manual-tool-panel button:hover,
+#spider-manual-tool-panel button:focus-visible,
+.spider-dialog-toggle:hover,
+.spider-dialog-toggle:focus-visible {
+  border-color: #fff1a8;
+  background: #e4d28f;
+  color: #24312a;
+}
+
+#spider-help-panel {
+  scrollbar-color: #7f8f68 transparent;
+}
+
+#spider-help-panel .spider-help-examples div {
+  background: rgb(49 67 56 / 78%);
+  border-left: 2px solid rgb(216 200 147 / 58%);
+}
+
+/* The two control surfaces share one instrument panel. */
+#spider-control-panel {
+  position: absolute;
+  z-index: 5;
+  box-sizing: border-box;
+  border: 1px solid #7f8f68;
+  background: rgb(48 62 45 / 86%);
+  box-shadow:
+    3px 3px 0 rgb(24 35 29 / 62%),
+    inset 0 0 0 1px rgb(216 200 147 / 12%);
+  backdrop-filter: blur(2px);
+}
+
+#spider-control-panel #spider-manual-tool-panel,
+#spider-control-panel #spider-command-panel {
+  position: static;
+  left: auto !important;
+  top: auto !important;
+  width: 100% !important;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  backdrop-filter: none;
+}
+
+#spider-control-panel #spider-manual-tool-panel {
+  max-height: 33vh;
+  overflow-y: auto;
+}
+
+#spider-control-panel #spider-command-panel {
+  border-top: 1px solid #7f8f68;
+}
+
+#spider-control-panel #spider-command-panel::before {
+  display: none;
 }

@@ -6,7 +6,11 @@ import { formatPlanArguments } from './spiderPlanFormatting.js';
 import { DeepgramVoice } from './DeepgramVoice.js';
 
 export class SpiderCommandPanel {
-  constructor(controller, { onGoalUpdate = () => {}, onPlanUpdate = () => {} } = {}) {
+  constructor(controller, {
+    onGoalUpdate = () => {},
+    onPlanUpdate = () => {},
+    mount = null,
+  } = {}) {
     this.controller = controller;
     this.onGoalUpdate = onGoalUpdate;
     this.onPlanUpdate = onPlanUpdate;
@@ -102,7 +106,7 @@ export class SpiderCommandPanel {
     for (const eventName of ['keydown', 'keyup']) {
       this.form.addEventListener(eventName, (event) => event.stopPropagation());
     }
-    document.getElementById('app').append(this.form);
+    (mount || document.getElementById('app')).append(this.form);
     document.addEventListener('focusin', this.onDocumentFocus);
     window.addEventListener('focus', this.onWindowFocus);
     requestAnimationFrame(this.focusInput);
@@ -159,11 +163,7 @@ export class SpiderCommandPanel {
     const canCapture = Boolean(navigator.mediaDevices?.getUserMedia && globalThis.MediaRecorder);
     const aiAccessAllowed = !document.getElementById('app')?.classList.contains('spider-guest');
     this.voiceButton.disabled = !canCapture || !aiAccessAllowed;
-    this.voiceButton.title = canCapture
-      ? aiAccessAllowed
-        ? 'Use your microphone to speak a spider command.'
-        : 'Password required for AI tools.'
-      : 'Microphone capture is unavailable in this browser.';
+    this.voiceButton.removeAttribute('title');
   }
 
   async toggleVoice() {

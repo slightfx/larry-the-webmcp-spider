@@ -95,7 +95,9 @@ export class SpiderWebMcpController {
     this.activeUserGoal = null;
     this.lastQueueError = null;
     this.activeToolName = null;
+    this.activeToolArguments = {};
     this.activeToolUntil = 0;
+    this.toolCallListeners = new Set();
     this.actionPlanCompletion = null;
     this.legacyStringExecutionArguments = false;
     this.controlState = getSpiderControlState(scene.spider);
@@ -129,8 +131,10 @@ export class SpiderWebMcpController {
   }
 
   setAgentStatus(executionState, goal = this.activeUserGoal) {
+    const completedNow = executionState === 'complete' && this.agentExecutionState !== 'complete';
     this.agentExecutionState = executionState;
     this.activeUserGoal = goal;
+    if (completedNow) this.scene.spiderMovementSound?.playHappy();
   }
 
   async registerTools(tools, controller, group) {
@@ -278,7 +282,7 @@ export class SpiderWebMcpController {
         }
       }
       const result = tool.execute(args);
-      if (!tool.annotations?.readOnlyHint) this.markToolActive(tool.name);
+      if (!tool.annotations?.readOnlyHint) this.markToolActive(tool.name, args);
       noop(`[WebMCP] result ← ${tool.name}`, result);
       if (announce) this.announceToolCall(tool.name, args);
       return result;
@@ -311,7 +315,9 @@ export class SpiderWebMcpController {
         shortLabel: 'INSPECT',
         allowedStates: Object.keys(STATE_CONFIG),
         description:
-          'Inspect the current game world, including the spider, surfaces, trees, platforms, and prey.',
+          'Read-only state query. Use this first when you need to understand Larry\'s current ' +
+          'location, surface, available tools, trees, platforms, prey, health, or active goal. ' +
+          'Do not use it to move or change the game.',
         inputSchema: { type: 'object', properties: {}, additionalProperties: false },
         annotations: { readOnlyHint: true },
         execute: () => this.getState(),
@@ -330,7 +336,10 @@ export class SpiderWebMcpController {
           'web',
           'airborne',
         ],
-        description: 'Stop the active spider movement command.',
+        description:
+          'Immediately cancel Larry\'s current movement, autonomous goal, or hunt. Use when the ' +
+          'user says stop, cancel, halt, or freeze, or when continuing would be unsafe. ' +
+          'Do not use this as a normal movement command.',
         inputSchema: { type: 'object', properties: {}, additionalProperties: false },
         annotations: { readOnlyHint: false },
         execute: () => {
@@ -364,8 +373,11 @@ export class SpiderWebMcpController {
         'airborne',
       ],
       description:
-        'Move the spider in a world direction for a bounded duration. The call validates the ' +
-        'direction against the spider’s current physical state.',
+        'Use for direct, short-range movement when the user specifies a direction such as left, ' +
+        'right, up, or down. Set target to edge to navigate autonomously to a platform edge, or ' +
+        'tree to navigate to a tree. This is not the right tool for hunting prey or climbing to ' +
+        'a platform; use hunt_prey or climb_tree for those complete goals. Direction availability ' +
+        'depends on Larry\'s current surface, and duration_ms is the input-hold duration.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -417,7 +429,11 @@ export class SpiderWebMcpController {
       title: 'Jump spider',
       shortLabel: 'JUMP',
       allowedStates: ['ground', 'ground_near_tree'],
-      description: 'Jump or leap forward into the air in the direction the spider is facing.',
+      description:
+        'Use to make Larry jump or pounce forward in the direction he is facing. Use after moving ' +
+        'into position when the user explicitly asks him to jump, leap, or pounce. It requires ' +
+        'solid ground and cannot be used while Larry is airborne or on a web, tree, or platform side. ' +
+        'For catching prey, prefer hunt_prey, which handles positioning and repeated attempts.',
       inputSchema: { type: 'object', properties: {}, additionalProperties: false },
       annotations: { readOnlyHint: false },
       execute: () => {
@@ -448,7 +464,10 @@ export class SpiderWebMcpController {
       shortLabel: 'CLIMB TREE',
       allowedStates: ['ground', 'ground_near_tree', 'tree', 'under_platform', 'platform_side'],
       description:
-        'Climb to a selected platform on a selected tree.',
+        'Use when the user wants Larry to climb a tree or reach a tree platform. This is a complete ' +
+        'navigation action: choose the tree and either the bottom or top platform. Do not use ' +
+        'move_spider for a platform-climbing goal unless you only need a small corrective movement. ' +
+        'Larry may need to approach or attach to the tree first.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -474,8 +493,11 @@ export class SpiderWebMcpController {
       shortLabel: 'HUNT',
       allowedStates: ['ground', 'ground_near_tree', 'tree', 'under_platform', 'platform_side'],
       description:
-        'Select prey and autonomously hunt it using A* pathfinding across platforms and cork trees, ' +
-        'then pounce when in range.',
+        'Use whenever the user asks Larry to hunt, catch, eat, or find prey. Choose nearest for ' +
+        'the closest prey, or select fly, springtail, or isopod when a type is named. This is a ' +
+        'complete autonomous goal: it plans movement across ground, trees, webs, and platforms, ' +
+        'then pounces when in range. Do not manually chain move_spider and jump_spider for a ' +
+        'normal hunt.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -494,10 +516,12 @@ export class SpiderWebMcpController {
       name: 'get_to_ground',
       title: 'Get to ground',
       shortLabel: 'GROUND',
-      allowedStates: ['ground', 'ground_near_tree', 'tree', 'under_platform', 'platform_side'],
+      allowedStates: ['ground', 'ground_near_tree', 'tree', 'web', 'under_platform', 'platform_side'],
       description:
-        'Get down to the soil by crawling to the underside of each elevated platform and dropping. ' +
-        'If another elevated platform catches the spider, repeat until the main ground is reached.',
+        'Use when the user asks Larry to return to, get back to, or descend to the ground/soil. ' +
+        'This is a complete autonomous descent from a tree, web, or elevated platform; it crawls ' +
+        'to platform undersides and drops repeatedly until the main ground is reached. Do not use ' +
+        'move_spider for a general return-to-ground goal.',
       inputSchema: { type: 'object', properties: {}, additionalProperties: false },
       annotations: { readOnlyHint: false },
       execute: () => this.startGetToGround(),
@@ -605,6 +629,7 @@ export class SpiderWebMcpController {
     this.finishHunt();
     this.lastQueueError = null;
     this.activeToolName = null;
+    this.activeToolArguments = {};
     this.activeToolUntil = 0;
     this.actionPlanCompletion = null;
     noop('[Spider navigation] all movement and autonomous goals stopped');
@@ -620,7 +645,7 @@ export class SpiderWebMcpController {
     return Math.max(0, Math.round(this.moveCommand.expiresAt - this.scene.time.now));
   }
 
-  markToolActive(toolName) {
+  markToolActive(toolName, arguments_ = {}) {
     const displayNames = {
       move_to_tree: 'move_spider',
       move_to_edge: 'move_spider',
@@ -631,13 +656,37 @@ export class SpiderWebMcpController {
       crawl_to_surface: 'move_spider',
     };
     const canonicalName = this.getCanonicalToolName(toolName);
-    this.activeToolName = displayNames[canonicalName] || canonicalName;
+    const displayedName = displayNames[canonicalName] || canonicalName;
+    this.activeToolName = displayedName;
+    // Internal navigation steps can carry live Phaser objects. Keep only the
+    // public tool's declared arguments so the UI can safely serialize them.
+    const publicTool = this.getAllTools().find((tool) => tool.name === displayedName);
+    const publicProperties = new Set(Object.keys(publicTool?.inputSchema?.properties || {}));
+    this.activeToolArguments = Object.fromEntries(
+      Object.entries(arguments_).filter(([name]) => publicProperties.has(name)),
+    );
     this.activeToolUntil = this.scene.time.now + 450;
+    this.notifyToolCallListeners();
   }
 
   clearActiveTool() {
     this.activeToolName = null;
+    this.activeToolArguments = {};
     this.activeToolUntil = 0;
+    this.notifyToolCallListeners();
+  }
+
+  onToolCall(listener) {
+    if (typeof listener !== 'function') return () => {};
+    this.toolCallListeners.add(listener);
+    return () => this.toolCallListeners.delete(listener);
+  }
+
+  notifyToolCallListeners() {
+    for (const listener of this.toolCallListeners) listener({
+      name: this.activeToolName,
+      arguments: { ...this.activeToolArguments },
+    });
   }
 
   getActiveToolNames() {
@@ -767,6 +816,7 @@ export class SpiderWebMcpController {
       || this.attackPending || this.scene.spider.isPouncing) return;
     const completion = this.actionPlanCompletion;
     this.actionPlanCompletion = null;
+    this.scene.spiderMovementSound?.playHappy();
     completion({ status: 'complete' });
   }
 
@@ -1539,16 +1589,6 @@ export class SpiderWebMcpController {
       noop('[Spider navigation] resumed climb after intermediate platform');
       return 'running';
     }
-    if (this.controlState === 'web') {
-      this.stopMove();
-      spider.detachFromSurface();
-      spider.attachCooldown = 0.35;
-      spider.velocity.y = Math.max(spider.velocity.y, 20);
-      goal.drops += 1;
-      this.syncState();
-      return 'running';
-    }
-
     if (this.controlState === 'under_platform' || this.controlState === 'platform_side') {
       if (spider.surfacePlatform === goal.platform) {
         goal.stage = 'mount_target';
@@ -1699,6 +1739,7 @@ export class SpiderWebMcpController {
       (this.controlState === 'ground'
         || this.controlState === 'ground_near_tree'
         || this.controlState === 'ground_near_web')
+      && spider.surfacePlatform === goal.ground
       && spider.position.y >= goal.ground.y - 24
     ) {
       this.stopMove();
@@ -1713,6 +1754,21 @@ export class SpiderWebMcpController {
       spider.attachCooldown = 0.35;
       // Leave the trunk vertically; an old undefined targetX here could
       // produce invalid velocity and a dramatic horizontal launch.
+      spider.velocity.x = 0;
+      spider.velocity.y = Math.max(spider.velocity.y, 20);
+      goal.drops += 1;
+      this.syncState();
+      return 'running';
+    }
+
+    if (this.controlState === 'web') {
+      // A web is a traversal surface, not a platform. Release the silk first
+      // so the normal fall/landing physics can find the ground or the next
+      // elevated platform below Larry.
+      this.stopMove();
+      if (spider.silkTraversal) spider.silkTraversal.attachedWeb = null;
+      spider.detachFromSurface();
+      spider.attachCooldown = 0.35;
       spider.velocity.x = 0;
       spider.velocity.y = Math.max(spider.velocity.y, 20);
       goal.drops += 1;
@@ -1933,7 +1989,7 @@ export class SpiderWebMcpController {
       });
       this.executingPlanAction = true;
       try {
-        this.markToolActive(action.tool);
+        this.markToolActive(action.tool, action.arguments || {});
         this.executeAction(action);
       } finally {
         this.executingPlanAction = false;
@@ -1972,7 +2028,7 @@ export class SpiderWebMcpController {
     return this.huntInProgress &&
       PERSISTENT_HUNT_TYPES.has(this.huntTarget?.type) &&
       this.huntTarget?.alive === true &&
-      this.huntPounceAttempts < 3;
+      this.huntPounceAttempts < 12;
   }
 
   consumeRestart() {
@@ -2227,7 +2283,7 @@ export class SpiderWebMcpController {
     const displayedTool = this.getAllTools().some((tool) => tool.name === rawTool)
       ? rawTool
       : toolName;
-    this.markToolActive(displayedTool);
+    this.markToolActive(displayedTool, args);
     const result = {
       accepted: true,
       ...toolResult,
@@ -2479,6 +2535,7 @@ export class SpiderWebMcpController {
     this.activeUserGoal = null;
     this.lastQueueError = null;
     this.activeToolName = null;
+    this.activeToolArguments = {};
     this.activeToolUntil = 0;
     this.attackPending = false;
     this.restartPending = false;

@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 
 const noop = () => {};
 
@@ -40,6 +41,9 @@ export function createApp({ fetchImpl = globalThis.fetch } = {}) {
   app.post('/api/auth/check', express.json({ limit: '4kb' }), (req, res) => {
     const configured = String(process.env.SPIDER_PASSWORD || '');
     const supplied = typeof req.body?.password === 'string' ? req.body.password : '';
+    const origin = String(req.get('origin') || '');
+    const localOrigin = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(origin);
+    if (localOrigin) return res.json({ ok: true, local_development: true });
     if (!configured) return res.status(503).json({ ok: false, error: 'Access password is not configured.' });
     return res.json({ ok: supplied.length > 0 && supplied === configured });
   });
@@ -125,6 +129,6 @@ function validateChatRequest(body) {
   return null;
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   createApp().listen(PORT, '0.0.0.0', () => noop(`Spider API listening on port ${PORT}`));
 }

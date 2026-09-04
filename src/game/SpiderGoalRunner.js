@@ -1,10 +1,10 @@
 import { validateToolCall } from './SpiderToolCallUtils.js';
 
-const MAX_DECISIONS = 3;
-const MAX_RECOVERIES = 2;
+const MAX_DECISIONS = 10;
+const MAX_RECOVERIES = 4;
 const ACTION_TIMEOUT_MS = 20_000;
 const SETTLE_MS = 180;
-const MAX_HUNT_MISSES = 2;
+const MAX_HUNT_MISSES = 10;
 
 function stateFingerprint(state) {
   return JSON.stringify({
